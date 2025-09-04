@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Therapy Journal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Homemade+Apple&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Homemade Apple', cursive;
+            background-color: #f3f4f6;
+            color: #1f2937;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body.dark {
+            background-color: #1f2937;
+            color: #f3f4f6;
+        }
+
+        body.dark .text-gray-800 {
+            color: #f3f4f6;
+        }
+
+        body.dark .text-gray-600 {
+            color: #f3f4f6;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-overlay {
+            background-color: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+        }
+
+        .modal-overlay.dark {
+            background-color: rgba(31, 41, 55, 0.95);
+        }
+        .modal-overlay.dark .bg-white {
+            background-color: #374151;
+        }
+
+        /* Custom scrollbar for a cleaner look */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #d1d5db;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background-color: #9ca3af;
+        }
+
+        .dialog-box {
+            background-color: #f9fafb;
+            border: 1px solid #e5e7eb;
+        }
+
+        .emoji-button {
+            transition: transform 0.2s ease-in-out;
+        }
+
+        .emoji-button:hover {
+            transform: scale(1.1);
+        }
+
+        /* Styling for the contenteditable div */
+        #journal-text {
+            line-height: 2rem;
+            min-height: 100%;
+        }
+
+        /* Hide the placeholder text when the content editable div is not empty */
+        #journal-text:empty:before {
+            content: "Start typing your entry...";
+            color: #9ca3af;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+        }
+
+        .calendar-day {
+            min-height: 60px;
+            text-align: center;
+            padding: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border-radius: 0.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .calendar-day:hover {
+            background-color: #f3f4f6;
+        }
+
+        .dark .calendar-day:hover {
+            background-color: #374151;
+        }
+
+        .dark .bg-white {
+            background-color: #374151;
+        }
+        .dark .bg-gray-100 {
+            background-color: #374151;
+        }
+        .dark .bg-gray-50 {
+            background-color: #4b5563;
+        }
+        
+        .dark .text-gray-700 {
+            color: #d1d5db;
+        }
+
+        .ai-text {
+            font-family: 'Merriweather', serif;
+            color: #3b82f6;
+            transition: color 0.3s ease-in-out;
+        }
+
+        .dark .ai-text {
+            color: #60a5fa;
+        }
+
+        .double-underline {
+            text-decoration: none;
+            border-bottom: 3px double currentColor;
+        }
+
+        .triple-underline {
+            text-decoration: none;
+            border-bottom: 5px solid currentColor;
+            border-image: linear-gradient(to right, currentColor 33.3%, transparent 33.3%, transparent 66.6%, currentColor 66.6%) 1;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex flex-col items-center min-h-screen">
+
+    <!-- Main Container -->
+    <div id="app-container" class="bg-white shadow-xl w-full max-w-4xl flex flex-col min-h-screen rounded-2xl md:p-4">
+        
+        <!-- Header/Menu Bar -->
+        <header class="w-full flex justify-between items-center p-4 bg-white border-b border-gray-200">
+            <h1 class="text-3xl font-bold text-gray-800 hidden md:block">Therapy Journal</h1>
+            <div class="flex items-center space-x-4">
+                <!-- Main Buttons Left -->
+                <button id="view-entries-btn" class="text-gray-600 hover:text-gray-800 transition-colors">
+                    <!-- Open Book Icon (SVG) -->
+                    <svg class="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                    </svg>
+                    <span class="text-sm font-semibold hidden md:inline">Entries</span>
+                </button>
+                <button id="ai-feedback-btn" class="text-gray-600 hover:text-gray-800 transition-colors">
+                    <!-- Cute Brain Icon (SVG) -->
+                    <svg class="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2c-3.3 0-6 2.7-6 6a6 6 0 0 0 6 6c.7 0 1.4-.2 2-.5.6.9 1.4 1.7 2.3 2.3 1.1.7 2.3 1.2 3.5 1.4.6 0 1-.4 1-1 0-.6-.4-1-1-1-1.2-.2-2.4-.7-3.5-1.4-.9-.6-1.7-1.4-2.3-2.3-.3-.6-.5-1.3-.5-2a6 6 0 0 0-6-6zM12 2s-3 3-3 6a3 3 0 0 0 3 3c3.3 0 6-2.7 6-6s-3-6-3-6zm0 14s-3-3-3-6a3 3 0 0 0 3 3c3.3 0 6-2.7 6-6s-3-6-3-6zm-4 4s-1.5-1.5-1.5-3a1.5 1.5 0 0 1 1.5-1.5c1.7 0 3 1.3 3 3s-1.3 3-3 3zm8-8s-1.5-1.5-1.5-3a1.5 1.5 0 0 1 1.5-1.5c1.7 0 3 1.3 3 3s-1.3 3-3 3z"></path>
+                    </svg>
+                    <span class="text-sm font-semibold hidden md:inline">AI Feedback</span>
+                </button>
+            </div>
+
+            <!-- Main Buttons Right -->
+            <div class="flex items-center space-x-4">
+                <button id="font-settings-btn" class="text-gray-600 hover:text-gray-800 transition-colors">
+                    <!-- Feather Icon (SVG) -->
+                    <svg class="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20.2 4.2L14.8 9.6M14.8 9.6L12 7l-7 7 2.5 2.5 5.5-5.5a2.12 2.12 0 1 1 3 3L12 17l4 4"></path>
+                    </svg>
+                    <span class="text-sm font-semibold hidden md:inline">Pen Settings</span>
+                </button>
+                <div id="save-buttons-container" class="space-x-4">
+                    <button id="update-btn" class="hidden text-gray-600 hover:text-gray-800 transition-colors">
+                         <svg class="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21.5 2v6h-6"/><path d="M21.5 6a8.5 8.5 0 1 1-16-5.5"/><path d="M12 9.5a2.5 2.5 0 0 1 5 0V12h-5z"/>
+                        </svg>
+                         <span class="text-sm font-semibold hidden md:inline">Update</span>
+                    </button>
+                    <button id="delete-btn" class="hidden text-gray-600 hover:text-red-500 transition-colors">
+                         <svg class="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                         <span class="text-sm font-semibold hidden md:inline">Delete</span>
+                    </button>
+                    <button id="cancel-btn" class="hidden text-gray-600 hover:text-gray-800 transition-colors">
+                         <svg class="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>
+                        </svg>
+                         <span class="text-sm font-semibold hidden md:inline">Cancel</span>
+                    </button>
+                    <button id="save-btn" class="text-gray-600 hover:text-gray-800 transition-colors">
+                        <svg class="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline>
+                        </svg>
+                        <span class="text-sm font-semibold hidden md:inline">Save</span>
+                    </button>
+                </div>
+                 <div class="relative">
+                    <button id="settings-btn" class="text-gray-600 hover:text-gray-800 transition-colors">
+                        <svg class="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0-.33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2h.09a1.65 1.65 0 0 0 .33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1.82.33l-.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.82.33z"></path>
+                        </svg>
+                        <span class="text-sm font-semibold hidden md:inline">Settings</span>
+                    </button>
+                    <!-- Settings Dropdown -->
+                    <div id="settings-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                        <button id="manage-feelings-btn" class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100">Manage Feelings</button>
+                        <button id="dark-mode-toggle" class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100">
+                            <span id="dark-mode-text">Dark Mode</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Journaling Area -->
+        <div class="flex-1 p-8 overflow-auto custom-scrollbar">
+            <div id="journal-text" contenteditable="true" class="w-full h-full text-xl bg-transparent focus:outline-none resize-none custom-scrollbar"></div>
+        </div>
+    </div>
+    
+    <!-- Modals/Panels (hidden by default) -->
+
+    <!-- Past Entries Modal -->
+    <div id="entries-modal" class="hidden fixed inset-0 flex items-center justify-center p-4 modal-overlay z-50">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg h-full max-h-[80vh] flex flex-col p-6">
+            <div class="flex justify-between items-center border-b pb-4 mb-4">
+                <h2 class="text-2xl font-bold text-gray-800">Past Entries</h2>
+                <button id="close-entries-btn" class="text-gray-500 hover:text-gray-800 text-2xl">×</button>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto custom-scrollbar">
+                <!-- Calendar View -->
+                <div id="calendar-view" class="fade-in">
+                    <div class="flex justify-between items-center mb-4">
+                        <button id="prev-month-btn" class="text-gray-600 hover:text-gray-800 font-bold text-2xl px-2"><</button>
+                        <h3 id="current-month-year" class="text-xl font-semibold text-gray-800"></h3>
+                        <button id="next-month-btn" class="text-gray-600 hover:text-gray-800 font-bold text-2xl px-2">></button>
+                    </div>
+                    <div class="calendar-grid text-sm text-gray-500 font-semibold mb-2">
+                        <div class="text-center">Sun</div>
+                        <div class="text-center">Mon</div>
+                        <div class="text-center">Tue</div>
+                        <div class="text-center">Wed</div>
+                        <div class="text-center">Thu</div>
+                        <div class="text-center">Fri</div>
+                        <div class="text-center">Sat</div>
+                    </div>
+                    <div id="calendar-body" class="calendar-grid">
+                        <!-- Calendar days will be rendered here -->
+                    </div>
+                </div>
+                
+                <!-- List View (hidden by default) -->
+                <div id="list-view" class="hidden fade-in">
+                     <div class="mb-4">
+                        <input type="text" id="entry-search" placeholder="Search entries..." class="w-full p-3 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                    <div id="entries-list" class="space-y-4">
+                        <p class="text-center text-gray-500">No entries yet. Save your first one!</p>
+                    </div>
+                </div>
+
+                <!-- Mood Tracker View -->
+                <div id="mood-tracker-view" class="hidden flex flex-col items-center justify-center fade-in">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4">Mood Tracker</h3>
+                    <canvas id="mood-chart" class="w-full max-w-lg h-64"></canvas>
+                </div>
+            </div>
+
+            <!-- Toggle Button -->
+            <div class="border-t pt-4 mt-4">
+                <button id="toggle-view-btn" class="w-full py-2 bg-gray-100 rounded-lg text-gray-600 font-semibold hover:bg-gray-200 transition-colors">
+                    Switch to List View
+                </button>
+            </div>
+            <p id="auth-status" class="text-sm text-gray-400 text-center mt-4"></p>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-modal" class="hidden fixed inset-0 flex items-center justify-center p-4 modal-overlay z-50">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-xs flex flex-col p-6 space-y-4 text-center">
+            <p class="text-lg text-gray-800">Are you sure you want to delete this entry?</p>
+            <div class="flex justify-center space-x-4">
+                <button id="confirm-delete-btn" class="bg-red-500 text-white font-semibold py-2 px-4 rounded-full hover:bg-red-600 transition-colors">Delete</button>
+                <button id="cancel-delete-btn" class="bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-full hover:bg-gray-400 transition-colors">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Save Modal -->
+    <div id="save-modal" class="hidden fixed inset-0 flex items-center justify-center p-4 modal-overlay z-50">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm flex flex-col p-6">
+            <div class="flex justify-between items-center border-b pb-4 mb-4">
+                <h2 class="text-2xl font-bold text-gray-800">Save Entry</h2>
+                <button id="close-save-btn" class="text-gray-500 hover:text-gray-800 text-2xl">×</button>
+            </div>
+            <p class="text-gray-500 text-center mb-4">How do you feel today?</p>
+            <div id="emoji-options-container" class="flex flex-wrap justify-center gap-4 py-4">
+                <!-- Emojis will be populated here by JS -->
+            </div>
+            <button id="add-feeling-btn" class="w-full text-gray-600 font-semibold py-2 mt-4 rounded-full border-2 border-gray-300 hover:bg-gray-100 transition-colors">
+                <span class="text-lg">+</span> Add a custom feeling
+            </button>
+        </div>
+    </div>
+
+    <!-- Manage Feelings Modal -->
+    <div id="manage-feelings-modal" class="hidden fixed inset-0 flex items-center justify-center p-4 modal-overlay z-50">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg h-full max-h-[80vh] flex flex-col p-6">
+            <div class="flex justify-between items-center border-b pb-4 mb-4">
+                <h2 class="text-2xl font-bold text-gray-800">Manage Feelings</h2>
+                <button id="close-manage-feelings-btn" class="text-gray-500 hover:text-gray-800 text-2xl">×</button>
+            </div>
+            <div id="current-feelings-list" class="flex-1 overflow-y-auto custom-scrollbar space-y-4 mb-4">
+                <!-- Feelings list will be populated here -->
+            </div>
+            <div class="flex flex-col space-y-4">
+                <input type="text" id="manage-custom-emoji-input" placeholder="New Emoji (e.g., 😊)" class="w-full p-3 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-xl text-center">
+                <input type="text" id="manage-custom-feeling-name-input" placeholder="New Name (e.g., Happy)" class="w-full p-3 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                <button id="save-new-custom-feeling-btn" class="w-full bg-emerald-500 text-white font-semibold py-3 rounded-full shadow-lg hover:bg-emerald-600 transition-colors">Add New Feeling</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Font Settings Modal -->
+    <div id="font-settings-modal" class="hidden fixed inset-0 flex items-center justify-center p-4 modal-overlay z-50">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm flex flex-col p-6 space-y-4">
+            <div class="flex justify-between items-center border-b pb-4 mb-4">
+                <h2 class="text-2xl font-bold text-gray-800">Font Settings</h2>
+                <button id="close-font-settings-btn" class="text-gray-500 hover:text-gray-800 text-2xl">×</button>
+            </div>
+            <div class="flex items-center justify-center space-x-4">
+                <button id="bold-btn" class="text-gray-600 hover:text-gray-800 transition-colors p-2 rounded-lg hover:bg-gray-100">
+                    <span class="font-bold text-2xl">B</span>
+                </button>
+                <button id="italic-btn" class="text-gray-600 hover:text-gray-800 transition-colors p-2 rounded-lg hover:bg-gray-100">
+                    <span class="italic text-2xl">I</span>
+                </button>
+                <button id="underline-btn" class="text-gray-600 hover:text-gray-800 transition-colors p-2 rounded-lg hover:bg-gray-100">
+                    <span class="underline text-2xl">U</span>
+                </button>
+                <button id="double-underline-btn" class="text-gray-600 hover:text-gray-800 transition-colors p-2 rounded-lg hover:bg-gray-100">
+                    <span class="text-2xl double-underline-btn-text"><u>U</u></span>
+                </button>
+                <button id="triple-underline-btn" class="text-gray-600 hover:text-gray-800 transition-colors p-2 rounded-lg hover:bg-gray-100">
+                    <span class="text-2xl triple-underline-btn-text"><u>U</u></span>
+                </button>
+                <input type="color" id="color-picker" class="w-10 h-10 border-none rounded-full cursor-pointer overflow-hidden">
+                <select id="font-size-select" class="p-2 border border-gray-300 rounded-md text-gray-700">
+                    <option value="8">8px</option>
+                    <option value="12">12px</option>
+                    <option value="14" selected>14px</option>
+                    <option value="16">16px</option>
+                    <option value="18">18px</option>
+                    <option value="20">20px</option>
+                    <option value="24">24px</option>
+                    <option value="28">28px</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, deleteDoc, collection, query, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // IMPORTANT: DO NOT change these variables. They are provided by the environment.
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        // --- Firebase Initialization ---
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        setLogLevel('Debug'); // Enable debug logging for Firestore
+
+        let userId = null;
+        let allEntries = {};
+        let currentEditingDocId = null;
+        let currentMonth = new Date().getMonth();
+        let currentYear = new Date().getFullYear();
+        let currentView = 'calendar';
+        
+        const appContainer = document.getElementById('app-container');
+        const journalTextEl = document.getElementById('journal-text');
+        
+        const entriesModal = document.getElementById('entries-modal');
+        const viewEntriesBtn = document.getElementById('view-entries-btn');
+        const closeEntriesBtn = document.getElementById('close-entries-btn');
+        const calendarViewEl = document.getElementById('calendar-view');
+        const listViewEl = document.getElementById('list-view');
+        const moodTrackerViewEl = document.getElementById('mood-tracker-view');
+        const toggleViewBtn = document.getElementById('toggle-view-btn');
+        const entriesListEl = document.getElementById('entries-list');
+        const entrySearchEl = document.getElementById('entry-search');
+        const moodChartCanvas = document.getElementById('mood-chart');
+
+        const deleteModal = document.getElementById('delete-modal');
+        const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+        const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
+
+        const saveBtn = document.getElementById('save-btn');
+        const updateBtn = document.getElementById('update-btn');
+        const deleteBtn = document.getElementById('delete-btn');
+        const cancelBtn = document.getElementById('cancel-btn');
+
+        const saveModal = document.getElementById('save-modal');
+        const closeSaveBtn = document.getElementById('close-save-btn');
+        const emojiOptionsContainer = document.getElementById('emoji-options-container');
+        const aiFeedbackBtn = document.getElementById('ai-feedback-btn');
+
+        const settingsBtn = document.getElementById('settings-btn');
+        const settingsDropdown = document.getElementById('settings-dropdown');
+        const manageFeelingsBtn = document.getElementById('manage-feelings-btn');
+        const darkModeToggle = document.getElementById('dark-mode-toggle');
+        const darkModeText = document.getElementById('dark-mode-text');
+        const fontSettingsBtn = document.getElementById('font-settings-btn');
+
+        const manageFeelingsModal = document.getElementById('manage-feelings-modal');
+        const closeManageFeelingsBtn = document.getElementById('close-manage-feelings-btn');
+        const currentFeelingsList = document.getElementById('current-feelings-list');
+        const manageCustomEmojiInput = document.getElementById('manage-custom-emoji-input');
+        const manageCustomFeelingNameInput = document.getElementById('manage-custom-feeling-name-input');
+        const saveNewCustomFeelingBtn = document.getElementById('save-new-custom-feeling-btn');
+        
+        const fontSettingsModal = document.getElementById('font-settings-modal');
+        const closeFontSettingsBtn = document.getElementById('close-font-settings-btn');
+        const boldBtn = document.getElementById('bold-btn');
+        const italicBtn = document.getElementById('italic-btn');
+        const underlineBtn = document.getElementById('underline-btn');
+        const doubleUnderlineBtn = document.getElementById('double-underline-btn');
+        const tripleUnderlineBtn = document.getElementById('triple-underline-btn');
+        const colorPicker = document.getElementById('color-picker');
+        const fontSizeSelect = document.getElementById('font-size-select');
+
+        const currentMonthYearEl = document.getElementById('current-month-year');
+        const prevMonthBtn = document.getElementById('prev-month-btn');
+        const nextMonthBtn = document.getElementById('next-month-btn');
+        const calendarBodyEl = document.getElementById('calendar-body');
+        
+        let defaultFeelings = [
+            { emoji: '😃', name: 'Happy' },
+            { emoji: '😥', name: 'Sad' },
+            { emoji: '😌', name: 'Calm' },
+            { emoji: '😬', name: 'Anxious' },
+            { emoji: '😡', name: 'Angry' }
+        ];
+
+        // --- Utility Functions ---
+        const getCurrentDateDocId = () => {
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        };
+
+        const getPrivateDocRef = (docId) => doc(db, 'artifacts', appId, 'users', userId, 'journals', docId);
+        const getCustomFeelingsCollectionRef = () => collection(db, 'artifacts', appId, 'users', userId, 'custom-feelings');
+        
+        const loadTodaysEntry = async () => {
+            currentEditingDocId = null;
+            saveBtn.classList.remove('hidden');
+            updateBtn.classList.add('hidden');
+            deleteBtn.classList.add('hidden');
+            cancelBtn.classList.add('hidden');
+
+            const docId = getCurrentDateDocId();
+            const docRef = getPrivateDocRef(docId);
+            try {
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    journalTextEl.innerHTML = docSnap.data().textEntry;
+                } else {
+                    journalTextEl.innerHTML = ``;
+                }
+            } catch (error) {
+                console.error("Error loading today's entry:", error);
+                journalTextEl.innerHTML = ``;
+            }
+        };
+
+        // --- Authentication ---
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                userId = user.uid;
+                await loadTodaysEntry();
+                await fetchAndPopulateFeelings();
+            } else {
+                try {
+                    if (initialAuthToken) {
+                        await signInWithCustomToken(auth, initialAuthToken);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                } catch (error) {
+                    console.error("Firebase Auth Error:", error);
+                }
+            }
+        });
+
+        // --- Firestore Operations ---
+        const saveOrUpdateEntry = async (text, emoji) => {
+            if (!userId) {
+                showToast("Please wait for authentication to complete.", true);
+                return;
+            }
+
+            if (text.trim() === '' || journalTextEl.innerHTML.trim() === '') {
+                 showToast("Please write something first!", true);
+                 return;
+            }
+
+            const docId = currentEditingDocId || getCurrentDateDocId();
+            const docRef = getPrivateDocRef(docId);
+
+            try {
+                await setDoc(docRef, {
+                    textEntry: text,
+                    emoji: emoji,
+                    timestamp: new Date()
+                });
+                showToast(`Entry saved! ${emoji}`);
+                closeModal(saveModal);
+                await loadTodaysEntry();
+            } catch (error) {
+                console.error("Error saving journal entry:", error);
+                showToast("Error saving entry.", true);
+            }
+        };
+
+        const deleteEntry = async () => {
+            if (!userId || !currentEditingDocId) {
+                showToast("No entry selected to delete.", true);
+                return;
+            }
+            const docRef = getPrivateDocRef(currentEditingDocId);
+            try {
+                await deleteDoc(docRef);
+                showToast("Entry deleted successfully!", false);
+                closeModal(deleteModal);
+                await loadTodaysEntry();
+            } catch (error) {
+                console.error("Error deleting entry:", error);
+                showToast("Error deleting entry.", true);
+            }
+        };
+
+        const fetchAllEntries = async () => {
+            if (!userId) return;
+            try {
+                const querySnapshot = await getDocs(collection(db, 'artifacts', appId, 'users', userId, 'journals'));
+                allEntries = {};
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const date = new Date(data.timestamp.toDate());
+                    const docId = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+                    allEntries[docId] = { id: doc.id, ...data };
+                });
+                renderView(currentView);
+            } catch (error) {
+                console.error("Error fetching entries:", error);
+            }
+        };
+
+        const renderEntriesList = (entries) => {
+            entriesListEl.innerHTML = '';
+            const sortedEntries = entries.sort((a,b) => new Date(b.timestamp.toDate()) - new Date(a.timestamp.toDate()));
+            if (sortedEntries.length === 0) {
+                entriesListEl.innerHTML = '<p class="text-center text-gray-500">No entries yet. Save your first one!</p>';
+            } else {
+                sortedEntries.forEach((data) => {
+                    const entryDate = new Date(data.timestamp.toDate()).toLocaleDateString();
+                    const entryEl = document.createElement('div');
+                    entryEl.className = 'bg-gray-50 rounded-lg p-4 shadow-sm space-y-2 cursor-pointer transition-transform hover:scale-[1.01]';
+                    entryEl.innerHTML = `
+                        <div class="flex items-center space-x-2">
+                            <span class="text-xl">${data.emoji}</span>
+                            <p class="text-sm text-gray-400">${entryDate}</p>
+                        </div>
+                        <div class="text-gray-700 truncate-text overflow-hidden whitespace-nowrap">${data.textEntry}</div>
+                    `;
+                    entryEl.addEventListener('click', () => {
+                        loadEntryForEditing(data.id, data.textEntry);
+                    });
+                    entriesListEl.appendChild(entryEl);
+                });
+            }
+        };
+
+        const loadEntryForEditing = (docId, htmlContent) => {
+            currentEditingDocId = docId;
+            journalTextEl.innerHTML = htmlContent;
+            
+            saveBtn.classList.add('hidden');
+            updateBtn.classList.remove('hidden');
+            deleteBtn.classList.remove('hidden');
+            cancelBtn.classList.remove('hidden');
+
+            closeModal(entriesModal);
+        };
+
+        const fetchAndPopulateFeelings = async () => {
+            if (!userId) return;
+            try {
+                const customFeelingsSnap = await getDocs(getCustomFeelingsCollectionRef());
+                const customFeelings = customFeelingsSnap.docs.map(doc => doc.data());
+                
+                const allFeelings = [...defaultFeelings, ...customFeelings];
+                emojiOptionsContainer.innerHTML = '';
+                
+                allFeelings.forEach(feeling => {
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = 'emoji-button text-4xl p-2 rounded-full hover:bg-emerald-100 dark:hover:bg-emerald-800 transition-colors';
+                    button.textContent = feeling.emoji;
+                    button.setAttribute('data-emoji', feeling.emoji);
+                    button.setAttribute('title', feeling.name);
+                    button.addEventListener('click', () => saveOrUpdateEntry(journalTextEl.innerHTML, feeling.emoji));
+                    emojiOptionsContainer.appendChild(button);
+                });
+            } catch (error) {
+                console.error("Error fetching feelings:", error);
+            }
+        };
+
+        const renderManageFeelingsList = async () => {
+            if (!userId) return;
+            try {
+                const customFeelingsSnap = await getDocs(getCustomFeelingsCollectionRef());
+                const allFeelings = [...defaultFeelings, ...customFeelingsSnap.docs.map(doc => doc.data())];
+
+                currentFeelingsList.innerHTML = '';
+                allFeelings.forEach(feeling => {
+                    const isDefault = defaultFeelings.some(f => f.name === feeling.name);
+                    const feelingEl = document.createElement('div');
+                    feelingEl.className = 'flex justify-between items-center p-3 bg-gray-50 rounded-lg dark:bg-gray-700';
+                    feelingEl.innerHTML = `
+                        <div class="flex items-center space-x-2">
+                            <span class="text-2xl">${feeling.emoji}</span>
+                            <span class="text-md">${feeling.name}</span>
+                        </div>
+                    `;
+                    
+                    if (!isDefault) {
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.innerHTML = `
+                             <svg class="h-6 w-6 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                        `;
+                        deleteBtn.onclick = async () => {
+                            try {
+                                await deleteDoc(doc(getCustomFeelingsCollectionRef(), feeling.name));
+                                showToast(`Feeling "${feeling.name}" deleted.`);
+                                await renderManageFeelingsList(); // Re-render the list
+                                await fetchAndPopulateFeelings(); // Update save modal
+                            } catch (error) {
+                                showToast("Error deleting feeling.", true);
+                            }
+                        };
+                        feelingEl.appendChild(deleteBtn);
+                    }
+
+                    currentFeelingsList.appendChild(feelingEl);
+                });
+            } catch (error) {
+                console.error("Error rendering feelings list:", error);
+            }
+        };
+
+        const saveNewCustomFeeling = async (emoji, name) => {
+            if (!userId) {
+                showToast("Please wait for authentication to complete.", true);
+                return;
+            }
+            if (emoji.trim() === '' || name.trim() === '') {
+                showToast("Please enter both an emoji and a name.", true);
+                return;
+            }
+            
+            const docRef = doc(getCustomFeelingsCollectionRef(), name);
+            try {
+                await setDoc(docRef, { emoji, name });
+                showToast(`Feeling "${name}" added!`);
+                manageCustomEmojiInput.value = '';
+                manageCustomFeelingNameInput.value = '';
+                await renderManageFeelingsList();
+                await fetchAndPopulateFeelings();
+            } catch (error) {
+                console.error("Error saving custom feeling:", error);
+                showToast("Error saving custom feeling.", true);
+            }
+        };
+
+        // --- AI Feedback Functionality ---
+        const getAiFeedback = async () => {
+            if (!journalTextEl.innerText.trim() || journalTextEl.innerText.trim() === "Start typing your entry...") {
+                showToast("Please write something before getting feedback!", true);
+                return;
+            }
+
+            aiFeedbackBtn.disabled = true;
+            aiFeedbackBtn.innerHTML = `
+                 <svg class="animate-spin h-6 w-6 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            `;
+            showToast("Getting feedback...", false);
+            
+            const userPrompt = journalTextEl.innerHTML;
+            const systemPrompt = "Your name is Dr. Siggy Pidgeon. You have the personality and attitude of Madea and a funny drag queen. You are straightforward and simple to understand for an autistic person. You use cultural references from nerd culture, anime, video games, and 80s/90s shows. Your responses are supportive and non-judgmental and do not offer a diagnosis or medical advice. Respond in a new paragraph and start the response with 'Dr. Siggy Pidgeon says:'.";
+
+            const payload = {
+                contents: [{ parts: [{ text: userPrompt }] }],
+                tools: [{ "google_search": {} }],
+                systemInstruction: {
+                    parts: [{ text: systemPrompt }]
+                }
+            };
+
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.status}`);
+                }
+
+                const result = await response.json();
+                const candidate = result.candidates?.[0];
+
+                if (candidate && candidate.content?.parts?.[0]?.text) {
+                    const text = candidate.content.parts[0].text;
+                    const formattedText = `<br><br><div class="ai-text">${text}</div>`;
+                    journalTextEl.innerHTML += formattedText;
+                } else {
+                    showToast("Sorry, I couldn't get a response. Please try again later.", true);
+                }
+            } catch (error) {
+                console.error("AI Feedback Error:", error);
+                showToast("Failed to get AI feedback. Please try again.", true);
+            } finally {
+                aiFeedbackBtn.disabled = false;
+                aiFeedbackBtn.innerHTML = `
+                    <svg class="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zM4 12a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-1a2 2 0 0 0-2-2zM20 12a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-1a2 2 0 0 0-2-2zM12 20a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-1a2 2 0 0 0-2-2z"></path>
+                    </svg>
+                    <span class="text-sm font-semibold hidden md:inline">AI Feedback</span>
+                `;
+            }
+        };
+
+        // --- View & Rendering Logic ---
+        const renderView = (view) => {
+            calendarViewEl.classList.add('hidden');
+            listViewEl.classList.add('hidden');
+            moodTrackerViewEl.classList.add('hidden');
+            
+            if (view === 'calendar') {
+                calendarViewEl.classList.remove('hidden');
+                toggleViewBtn.textContent = 'Switch to List View';
+                renderCalendar(currentYear, currentMonth);
+            } else if (view === 'list') {
+                listViewEl.classList.remove('hidden');
+                toggleViewBtn.textContent = 'Switch to Mood Tracker';
+                renderEntriesList(Object.values(allEntries));
+            } else if (view === 'mood-tracker') {
+                moodTrackerViewEl.classList.remove('hidden');
+                toggleViewBtn.textContent = 'Switch to Calendar View';
+                renderMoodTracker();
+            }
+        };
+
+        // --- Calendar Functions ---
+        const renderCalendar = (year, month) => {
+            currentMonthYearEl.textContent = new Date(year, month).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            calendarBodyEl.innerHTML = '';
+            
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            for (let i = 0; i < firstDay; i++) {
+                const emptyDay = document.createElement('div');
+                emptyDay.className = 'calendar-day';
+                calendarBodyEl.appendChild(emptyDay);
+            }
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(year, month, day);
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const dayEl = document.createElement('button');
+                dayEl.className = 'calendar-day text-sm text-gray-800';
+                dayEl.innerHTML = `<span class="font-bold">${day}</span>`;
+
+                if (allEntries[dateStr]) {
+                    const emojiSpan = document.createElement('span');
+                    emojiSpan.className = 'text-xl';
+                    emojiSpan.textContent = allEntries[dateStr].emoji;
+                    dayEl.appendChild(emojiSpan);
+                    dayEl.classList.add('bg-emerald-50', 'hover:bg-emerald-100');
+                    dayEl.onclick = () => loadEntryForEditing(allEntries[dateStr].id, allEntries[dateStr].textEntry);
+                } else {
+                    dayEl.classList.add('text-gray-400');
+                }
+                
+                calendarBodyEl.appendChild(dayEl);
+            }
+        };
+
+        prevMonthBtn.addEventListener('click', () => {
+            currentMonth--;
+            if (currentMonth < 0) {
+                currentMonth = 11;
+                currentYear--;
+            }
+            renderCalendar(currentYear, currentMonth);
+        });
+
+        nextMonthBtn.addEventListener('click', () => {
+            currentMonth++;
+            if (currentMonth > 11) {
+                currentMonth = 0;
+                currentYear++;
+            }
+            renderCalendar(currentYear, currentMonth);
+        });
+
+        // --- Mood Tracker Functions ---
+        const renderMoodTracker = () => {
+            const moodCounts = Object.values(allEntries).reduce((acc, entry) => {
+                const emoji = entry.emoji;
+                acc[emoji] = (acc[emoji] || 0) + 1;
+                return acc;
+            }, {});
+
+            const moods = Object.keys(moodCounts);
+            const counts = Object.values(moodCounts);
+            const totalCount = counts.reduce((sum, count) => sum + count, 0);
+
+            const canvas = moodChartCanvas;
+            const ctx = canvas.getContext('2d');
+
+            const isDarkMode = document.body.classList.contains('dark');
+            const textColor = isDarkMode ? '#f3f4f6' : '#1f2937';
+            const barColor = isDarkMode ? '#10b981' : '#34d399';
+
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const barWidth = 40;
+            const spacing = (canvas.width - (moods.length * barWidth)) / (moods.length + 1);
+            const maxCount = Math.max(...counts);
+
+            ctx.font = '16px Homemade Apple, cursive';
+            ctx.fillStyle = textColor;
+            ctx.textAlign = 'center';
+
+            moods.forEach((emoji, index) => {
+                const count = counts[index];
+                const barHeight = (count / maxCount) * (canvas.height - 50);
+                const x = spacing + (index * (barWidth + spacing));
+                const y = canvas.height - barHeight - 20;
+
+                ctx.fillStyle = barColor;
+                ctx.fillRect(x, y, barWidth, barHeight);
+
+                ctx.fillStyle = textColor;
+                ctx.fillText(emoji, x + barWidth / 2, canvas.height - 5);
+                ctx.fillText(count.toString(), x + barWidth / 2, y - 5);
+            });
+        };
+
+        // --- UI & Modal Events ---
+        const openModal = (modal) => modal.classList.remove('hidden');
+        const closeModal = (modal) => modal.classList.add('hidden');
+
+        saveBtn.addEventListener('click', () => {
+            closeModal(settingsDropdown);
+            openModal(saveModal);
+        });
+        updateBtn.addEventListener('click', () => openModal(saveModal));
+        closeSaveBtn.addEventListener('click', () => closeModal(saveModal));
+
+        deleteBtn.addEventListener('click', () => openModal(deleteModal));
+        cancelDeleteBtn.addEventListener('click', () => closeModal(deleteModal));
+        confirmDeleteBtn.addEventListener('click', () => deleteEntry());
+        cancelBtn.addEventListener('click', () => loadTodaysEntry());
+
+        viewEntriesBtn.addEventListener('click', () => {
+            closeModal(settingsDropdown);
+            openModal(entriesModal);
+            fetchAllEntries();
+        });
+        closeEntriesBtn.addEventListener('click', () => closeModal(entriesModal));
+
+        settingsBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            settingsDropdown.classList.toggle('hidden');
+        });
+        document.addEventListener('click', (e) => {
+            if (!settingsBtn.contains(e.target) && !settingsDropdown.contains(e.target)) {
+                settingsDropdown.classList.add('hidden');
+            }
+        });
+
+        manageFeelingsBtn.addEventListener('click', () => {
+            closeModal(settingsDropdown);
+            openModal(manageFeelingsModal);
+            renderManageFeelingsList();
+        });
+        closeManageFeelingsBtn.addEventListener('click', () => closeModal(manageFeelingsModal));
+
+        saveNewCustomFeelingBtn.addEventListener('click', () => {
+            saveNewCustomFeeling(manageCustomEmojiInput.value, manageCustomFeelingNameInput.value);
+        });
+
+        darkModeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark');
+            const appHeader = document.querySelector('header');
+            const modals = document.querySelectorAll('.modal-overlay');
+
+            if (document.body.classList.contains('dark')) {
+                darkModeText.textContent = 'Light Mode';
+                appHeader.classList.remove('bg-white', 'border-gray-200');
+                appHeader.classList.add('bg-gray-800', 'border-gray-700');
+                modals.forEach(modal => modal.classList.add('dark'));
+            } else {
+                darkModeText.textContent = 'Dark Mode';
+                appHeader.classList.remove('bg-gray-800', 'border-gray-700');
+                appHeader.classList.add('bg-white', 'border-gray-200');
+                modals.forEach(modal => modal.classList.remove('dark'));
+            }
+            renderView(currentView);
+        });
+        
+        fontSettingsBtn.addEventListener('click', () => {
+            closeModal(settingsDropdown);
+            openModal(fontSettingsModal);
+        });
+        closeFontSettingsBtn.addEventListener('click', () => closeModal(fontSettingsModal));
+
+        boldBtn.addEventListener('click', () => document.execCommand('bold', false, null));
+        italicBtn.addEventListener('click', () => document.execCommand('italic', false, null));
+        
+        function applyCustomUnderline(style) {
+            const selection = window.getSelection();
+            if (!selection.rangeCount) return;
+            
+            const range = selection.getRangeAt(0);
+            const selectedText = range.extractContents();
+            
+            const span = document.createElement('span');
+            span.appendChild(selectedText);
+            
+            // Clear existing underline styles
+            span.style.textDecoration = 'none';
+            span.style.borderBottom = 'none';
+            span.classList.remove('double-underline', 'triple-underline');
+            
+            if (style === 'single') {
+                span.style.textDecoration = 'underline';
+            } else if (style === 'double') {
+                span.classList.add('double-underline');
+            } else if (style === 'triple') {
+                span.classList.add('triple-underline');
+            }
+            
+            range.insertNode(span);
+        }
+        
+        underlineBtn.addEventListener('click', () => applyCustomUnderline('single'));
+        doubleUnderlineBtn.addEventListener('click', () => applyCustomUnderline('double'));
+        tripleUnderlineBtn.addEventListener('click', () => applyCustomUnderline('triple'));
+
+        colorPicker.addEventListener('input', (e) => document.execCommand('foreColor', false, e.target.value));
+        fontSizeSelect.addEventListener('change', (e) => {
+            document.execCommand('fontSize', false, '7');
+            let selectedFont = getSelection().anchorNode;
+            while(selectedFont.nodeName !== 'FONT') {
+                selectedFont = selectedFont.parentNode;
+            }
+            selectedFont.size = '';
+            selectedFont.style.fontSize = `${e.target.value}px`;
+        });
+
+        toggleViewBtn.addEventListener('click', () => {
+            if (currentView === 'calendar') {
+                currentView = 'list';
+            } else if (currentView === 'list') {
+                currentView = 'mood-tracker';
+            } else {
+                currentView = 'calendar';
+            }
+            renderView(currentView);
+        });
+        
+        entrySearchEl.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const filteredEntries = Object.values(allEntries).filter(entry => 
+                (entry.textEntry && entry.textEntry.toLowerCase().includes(searchTerm)) || 
+                (entry.emoji && entry.emoji.includes(searchTerm))
+            );
+            renderEntriesList(filteredEntries);
+        });
+
+        aiFeedbackBtn.addEventListener('click', () => {
+            closeModal(settingsDropdown);
+            getAiFeedback();
+        });
+
+        // --- Toast Functionality ---
+        const showToast = (message, isError = false) => {
+            const toast = document.createElement('div');
+            toast.textContent = message;
+            toast.className = `fixed bottom-4 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-full text-white shadow-xl text-center z-50 transition-opacity duration-300 fade-in ${isError ? 'bg-red-500' : 'bg-gray-800'}`;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.remove('fade-in');
+                toast.classList.add('opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        };
+    </script>
+</body>
+</html>
+
+
