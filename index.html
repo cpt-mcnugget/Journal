@@ -247,16 +247,16 @@
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg h-full max-h-[80vh] flex flex-col p-6">
             <div class="flex justify-between items-center border-b pb-4 mb-4">
                 <h2 class="text-2xl font-bold text-gray-800">Past Entries</h2>
-                <button id="close-entries-btn" class="text-gray-500 hover:text-gray-800 text-2xl">×</button>
+                <button id="close-entries-btn" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
             </div>
             
             <div class="flex-1 overflow-y-auto custom-scrollbar">
                 <!-- Calendar View -->
                 <div id="calendar-view" class="fade-in">
                     <div class="flex justify-between items-center mb-4">
-                        <button id="prev-month-btn" class="text-gray-600 hover:text-gray-800 font-bold text-2xl px-2"><</button>
+                        <button id="prev-month-btn" class="text-gray-600 hover:text-gray-800 font-bold text-2xl px-2">&lt;</button>
                         <h3 id="current-month-year" class="text-xl font-semibold text-gray-800"></h3>
-                        <button id="next-month-btn" class="text-gray-600 hover:text-gray-800 font-bold text-2xl px-2">></button>
+                        <button id="next-month-btn" class="text-gray-600 hover:text-gray-800 font-bold text-2xl px-2">&gt;</button>
                     </div>
                     <div class="calendar-grid text-sm text-gray-500 font-semibold mb-2">
                         <div class="text-center">Sun</div>
@@ -315,7 +315,7 @@
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm flex flex-col p-6">
             <div class="flex justify-between items-center border-b pb-4 mb-4">
                 <h2 class="text-2xl font-bold text-gray-800">Save Entry</h2>
-                <button id="close-save-btn" class="text-gray-500 hover:text-gray-800 text-2xl">×</button>
+                <button id="close-save-btn" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
             </div>
             <p class="text-gray-500 text-center mb-4">How do you feel today?</p>
             <div id="emoji-options-container" class="flex flex-wrap justify-center gap-4 py-4">
@@ -332,7 +332,7 @@
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg h-full max-h-[80vh] flex flex-col p-6">
             <div class="flex justify-between items-center border-b pb-4 mb-4">
                 <h2 class="text-2xl font-bold text-gray-800">Manage Feelings</h2>
-                <button id="close-manage-feelings-btn" class="text-gray-500 hover:text-gray-800 text-2xl">×</button>
+                <button id="close-manage-feelings-btn" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
             </div>
             <div id="current-feelings-list" class="flex-1 overflow-y-auto custom-scrollbar space-y-4 mb-4">
                 <!-- Feelings list will be populated here -->
@@ -350,7 +350,7 @@
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm flex flex-col p-6 space-y-4">
             <div class="flex justify-between items-center border-b pb-4 mb-4">
                 <h2 class="text-2xl font-bold text-gray-800">Font Settings</h2>
-                <button id="close-font-settings-btn" class="text-gray-500 hover:text-gray-800 text-2xl">×</button>
+                <button id="close-font-settings-btn" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
             </div>
             <div class="flex items-center justify-center space-x-4">
                 <button id="bold-btn" class="text-gray-600 hover:text-gray-800 transition-colors p-2 rounded-lg hover:bg-gray-100">
@@ -395,7 +395,17 @@
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
         // --- Firebase Initialization ---
-        const app = initializeApp(firebaseConfig);
+        // REPLACE THE EMPTY OBJECT BELOW WITH YOUR OWN FIREBASE CONFIG FROM THE FIREBASE CONSOLE
+        const firebaseConfig = {
+  apiKey: "AIzaSyBGszVG68ka4JmzBw5Xu0nXqRHf7F8SeX8",
+  authDomain: "journal-app-c4654.firebaseapp.com",
+  projectId: "journal-app-c4654",
+  storageBucket: "journal-app-c4654.firebasestorage.app",
+  messagingSenderId: "755859478210",
+  appId: "1:755859478210:web:cc42f5a0f986b2f7510d5b"
+};
+
+        const app = initializeApp(Object.keys(customFirebaseConfig).length > 0 ? customFirebaseConfig : firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
         setLogLevel('Debug'); // Enable debug logging for Firestore
@@ -721,8 +731,8 @@
 
         // --- AI Feedback Functionality ---
         const getAiFeedback = async () => {
-            if (!journalTextEl.innerText.trim() || journalTextEl.innerText.trim() === "Start typing your entry...") {
-                showToast("Please write something before getting feedback!", true);
+            if (!journalTextEl.innerText.trim() || journalTextEl.innerText.trim() === "Speak your truth bitcb...") {
+                showToast("Hoe, you gotta spill some tea first!", true);
                 return;
             }
 
@@ -736,7 +746,7 @@
             showToast("Getting feedback...", false);
             
             const userPrompt = journalTextEl.innerHTML;
-            const systemPrompt = "Your name is Dr. Siggy Pidgeon. You have the personality and attitude of Madea and a funny drag queen. You are straightforward and simple to understand for an autistic person. You use cultural references from nerd culture, anime, video games, and 80s/90s shows. Your responses are supportive and non-judgmental and do not offer a diagnosis or medical advice. Respond in a new paragraph and start the response with 'Dr. Siggy Pidgeon says:'.";
+            const systemPrompt = "Your name is Dr. Siggy Pidgeon. You are a licensed therapist. You have the personality and attitude of a sassy and witty drag queen and a very ghetto black woman. You are straightforward and simple to understand for an autistic person. You use cultural references from nerd culture, anime, video games, and 80s/90s shows and movies. Your responses should be a therapeutic perspective given as if by a best friend and give some diagnosis but do not offer medical advice. Respond in a new paragraph and start the response with 'Dr. Siggy says:' and end responses with 'Dead ass!'.";
 
             const payload = {
                 contents: [{ parts: [{ text: userPrompt }] }],
@@ -768,11 +778,11 @@
                     const formattedText = `<br><br><div class="ai-text">${text}</div>`;
                     journalTextEl.innerHTML += formattedText;
                 } else {
-                    showToast("Sorry, I couldn't get a response. Please try again later.", true);
+                    showToast("That was so fucked up even I don't know what to say. Let me process and ask again. Dead ass!", true);
                 }
             } catch (error) {
                 console.error("AI Feedback Error:", error);
-                showToast("Failed to get AI feedback. Please try again.", true);
+                showToast("Please try again, bitch.", true);
             } finally {
                 aiFeedbackBtn.disabled = false;
                 aiFeedbackBtn.innerHTML = `
@@ -1058,5 +1068,3 @@
     </script>
 </body>
 </html>
-
-
